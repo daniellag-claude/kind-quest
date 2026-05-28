@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Kind Quest</title>
+<style>
+  :root{
+    --ink:#2b2545;
+    --pink:#ff5e7e;
+    --orange:#ff9a5a;
+    --purple:#7b5cff;
+    --card:#ffffff;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    font-family:'Nunito','Avenir Next','Trebuchet MS',sans-serif;
+    color:var(--ink);
+    background:linear-gradient(135deg,#ff5e7e,#ff9a5a 45%,#7b5cff);
+    background-size:200% 200%;
+    animation:flow 16s ease infinite;
+    min-height:100%;
+    display:flex; justify-content:center;
+    padding:18px;
+  }
+  @keyframes flow{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+  .app{ width:100%; max-width:460px; }
+
+  /* header */
+  .top{ display:flex; align-items:center; justify-content:space-between; color:#fff; margin-bottom:14px; }
+  .brand{ font-size:23px; font-weight:900; letter-spacing:-.5px; text-shadow:0 2px 8px rgba(0,0,0,.18); }
+  .brand small{ display:block; font-size:10.5px; font-weight:700; opacity:.9; letter-spacing:.5px; text-transform:uppercase; }
+  .rank{ background:rgba(255,255,255,.22); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.35);
+         color:#fff; padding:7px 11px; border-radius:999px; font-weight:800; font-size:12px; white-space:nowrap; flex:0 0 auto; }
+
+  /* stats */
+  .stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .stat{ background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.3); backdrop-filter:blur(6px);
+         border-radius:16px; padding:10px 6px; text-align:center; color:#fff; }
+  .stat b{ display:block; font-size:22px; font-weight:900; line-height:1; }
+  .stat span{ font-size:11px; font-weight:700; opacity:.92; }
+
+  /* challenge card */
+  .card{
+    background:var(--card); border-radius:26px; padding:26px 22px 24px;
+    box-shadow:0 18px 40px rgba(43,37,69,.28);
+    text-align:center; position:relative; overflow:hidden;
+    min-height:280px; display:flex; flex-direction:column; justify-content:center;
+  }
+  .tagrow{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; }
+  .cat{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.6px;
+        color:#fff; padding:5px 11px; border-radius:999px; }
+  .sparks{ font-size:13px; letter-spacing:2px; }
+  .emoji{ font-size:54px; line-height:1; margin-bottom:14px; }
+  .ctext{ font-size:23px; font-weight:800; line-height:1.3; padding:0 4px; transition:opacity .15s; }
+  .shuffling .ctext{ opacity:.35; }
+
+  /* buttons */
+  .actions{ display:flex; gap:10px; margin-top:16px; }
+  button{ font-family:inherit; cursor:pointer; border:none; font-weight:900; border-radius:16px; transition:transform .08s, box-shadow .2s, opacity .2s; }
+  button:active{ transform:scale(.96); }
+  .done{ flex:1.4; background:linear-gradient(135deg,#2bd47d,#19b96a); color:#fff; font-size:18px; padding:16px;
+         box-shadow:0 8px 18px rgba(25,185,106,.4); }
+  .reroll{ flex:1; background:#fff; color:var(--purple); font-size:16px; padding:16px; box-shadow:0 8px 18px rgba(0,0,0,.12); }
+  .done.gotit{ background:linear-gradient(135deg,#bdbdbd,#9e9e9e); box-shadow:none; }
+
+  /* category chips */
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 4px; justify-content:center; }
+  .chip{ background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.34); color:#fff;
+         padding:7px 12px; border-radius:999px; font-size:12.5px; font-weight:800; }
+  .chip.active{ background:#fff; color:var(--purple); }
+
+  /* badges */
+  .section-title{ color:#fff; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1px;
+                  opacity:.95; margin:20px 0 8px; text-align:center; }
+  .badges{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .badge{ width:62px; text-align:center; color:#fff; opacity:.45; }
+  .badge.on{ opacity:1; }
+  .badge .b-em{ font-size:26px; display:block; filter:grayscale(1); }
+  .badge.on .b-em{ filter:none; }
+  .badge .b-name{ font-size:9.5px; font-weight:800; line-height:1.15; margin-top:2px; }
+
+  .brag{ width:100%; margin-top:18px; background:rgba(255,255,255,.95); color:var(--pink);
+         padding:14px; font-size:15px; }
+  .foot{ text-align:center; color:#fff; opacity:.85; font-size:11px; font-weight:700; margin:16px 0 4px; }
+
+  /* toast + confetti */
+  #toast{ position:fixed; left:50%; top:22px; transform:translateX(-50%) translateY(-80px);
+          background:#fff; color:var(--ink); padding:12px 20px; border-radius:999px; font-weight:900;
+          box-shadow:0 10px 30px rgba(0,0,0,.25); opacity:0; transition:transform .4s, opacity .4s; z-index:30; font-size:15px; }
+  #toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+  #cc{ position:fixed; inset:0; pointer-events:none; z-index:20; }
+</style>
+</head>
+<body>
+<canvas id="cc"></canvas>
+<div id="toast"></div>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">Kind Quest<small>do a little good</small></div>
+    <div class="rank" id="rank">🌱 Kind Sprout</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-points">0</b><span>✨ points</span></div>
+    <div class="stat"><b id="s-streak">0</b><span>🔥 day streak</span></div>
+    <div class="stat"><b id="s-total">0</b><span>💛 good deeds</span></div>
+  </div>
+
+  <div class="card" id="card">
+    <div class="tagrow">
+      <span class="cat" id="cat">Surprise</span>
+      <span class="sparks" id="sparks">✨</span>
+    </div>
+    <div class="emoji" id="emoji">🎲</div>
+    <div class="ctext" id="ctext">Tap a button to get your first kind challenge!</div>
+  </div>
+
+  <div class="actions">
+    <button class="done" id="done">Done! 🎉</button>
+    <button class="reroll" id="reroll">New 🎲</button>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="section-title">Your badges</div>
+  <div class="badges" id="badges"></div>
+
+  <button class="brag" id="brag">Brag a little 📣</button>
+  <div class="foot">Streaks reset if you skip a day. Be kind to yourself too.</div>
+</div>
+
+<script>
+/* ---------------- data ---------------- */
+const CATS = {
+  Strangers:  '#ff5e7e',
+  Loved_ones: '#ff9a5a',
+  Community:  '#2bd47d',
+  Secret:     '#7b5cff',
+  Online:     '#21b5d6',
+  You:        '#e0518a',
+  Bold:       '#f4a300'
+};
+const CHALLENGES = [
+  // Strangers
+  ["Pay for the order of the person behind you in the queue","Strangers","☕",3],
+  ["Give a genuine compliment to a stranger today","Strangers","😊",1],
+  ["Let someone go ahead of you in a line","Strangers","🙋",1],
+  ["Leave a generous tip with a kind note for your server","Strangers","🧾",2],
+  ["Hold the door and smile for the next five people","Strangers","🚪",1],
+  ["Thank someone in customer service like you mean it","Strangers","💬",1],
+  ["Help someone carry something heavy","Strangers","📦",2],
+  ["Tell a small-business owner you appreciate them","Strangers","🏪",2],
+  // Loved ones
+  ["Text three people one thing you appreciate about them","Loved_ones","💌",1],
+  ["Call a family member you haven't spoken to in a while","Loved_ones","📞",2],
+  ["Write a thank-you note to someone who shaped you","Loved_ones","✍️",2],
+  ["Do a chore that's normally someone else's, no announcement","Loved_ones","🧹",2],
+  ["Send a voice note hyping a friend up","Loved_ones","🎙️",1],
+  ["Surprise someone you live with with a treat","Loved_ones","🍫",2],
+  ["Reconnect with an old friend you've lost touch with","Loved_ones","🤝",2],
+  ["Offer a tired parent an hour of free help","Loved_ones","👶",3],
+  // Community
+  ["Pick up five pieces of litter on your walk","Community","🌍",1],
+  ["Bag up clothes you don't wear and donate them","Community","👕",2],
+  ["Leave a 5-star review for a small local business","Community","⭐",1],
+  ["Donate any amount to a cause you care about","Community","💝",2],
+  ["Bring a cold drink to someone working outdoors","Community","🥤",2],
+  ["Share a local fundraiser with your followers","Community","📢",1],
+  ["Water a neglected plant or plant something new","Community","🌱",1],
+  ["Volunteer an hour somewhere this week","Community","🙌",3],
+  // Secret
+  ["Leave a coin taped to a vending machine for a stranger","Secret","🪙",1],
+  ["Leave a kind anonymous note somewhere public","Secret","🤫",1],
+  ["Pay off a small layaway or buy a stranger's coffee anonymously","Secret","🎁",3],
+  ["Leave flowers on a stranger's doorstep or windscreen","Secret","💐",2],
+  ["Donate anonymously to someone who needs it","Secret","🫶",2],
+  // Online
+  ["Leave genuinely encouraging comments on three posts","Online","💬",1],
+  ["Reach out privately to someone who seems down","Online","🌧️",2],
+  ["Share someone's work or small business to help them","Online","🔁",1],
+  ["Send a kind review or shout-out to a creator you love","Online","📝",1],
+  // You
+  ["Write down three things you did well today","You","📓",1],
+  ["Say no to something that drains you, guilt-free","You","🚫",2],
+  ["Take a ten-minute walk just for you","You","🚶",1],
+  ["Forgive yourself for one thing today","You","🕊️",2],
+  ["Rest without earning it first","You","😌",1],
+  ["Drink water and eat something that's good for you","You","🥗",1],
+  // Bold
+  ["Challenge three friends to do a kind act today","Bold","🔗",2],
+  ["Mentor or teach someone something for an hour","Bold","🧠",3],
+  ["Give away something you value to someone who needs it","Bold","🎀",3],
+  ["Have the kind, honest conversation you've been avoiding","Bold","💪",3],
+  ["Organise a few people to do a kind act together","Bold","👥",3]
+];
+
+const RANKS = [
+  [0,'🌱','Sprout'], [60,'✨','Spark'], [180,'🌟','Champ'],
+  [400,'🦸','Hero'], [800,'👑','Legend']
+];
+
+const BADGES = [
+  ['first','🌱','First Spark',  s=>s.total>=1],
+  ['roll', '🔥','On a Roll',    s=>s.streak>=3],
+  ['week', '📅','Week of Kind', s=>s.streak>=7],
+  ['ten',  '🌟','Ten Good',     s=>s.total>=10],
+  ['quart','🏅','25 Acts',      s=>s.total>=25],
+  ['explore','🧭','Explorer',   s=>s.cats.length>=4],
+  ['bold', '💪','Bold Heart',   s=>s.maxSpark>=3]
+];
+
+/* ---------------- state ---------------- */
+const KEY='kindquest';
+let state = load();
+let current=null, filter=null, shuffling=false;
+
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) return s; }catch(e){}
+  return {points:0, streak:0, total:0, lastDate:null, cats:[], maxSpark:0, badges:[]};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+/* ---------------- ui refs ---------------- */
+const $=id=>document.getElementById(id);
+const card=$('card');
+
+/* ---------------- render ---------------- */
+function rankFor(p){ let r=RANKS[0]; for(const x of RANKS){ if(p>=x[0]) r=x; } return r; }
+function renderStats(){
+  $('s-points').textContent=state.points;
+  $('s-streak').textContent=state.streak;
+  $('s-total').textContent=state.total;
+  const r=rankFor(state.points);
+  $('rank').textContent=`${r[1]} ${r[2]}`;
+}
+function renderBadges(){
+  const box=$('badges'); box.innerHTML='';
+  BADGES.forEach(b=>{
+    const on=state.badges.includes(b[0]);
+    const d=document.createElement('div');
+    d.className='badge'+(on?' on':'');
+    d.innerHTML=`<span class="b-em">${b[1]}</span><span class="b-name">${on?b[2]:'???'}</span>`;
+    box.appendChild(d);
+  });
+}
+function renderChips(){
+  const box=$('chips'); box.innerHTML='';
+  const mk=(label,val)=>{
+    const c=document.createElement('div');
+    c.className='chip'+(filter===val?' active':'');
+    c.textContent=label;
+    c.onclick=()=>{ filter=val; renderChips(); draw(); };
+    box.appendChild(c);
+  };
+  mk('🎲 Surprise', null);
+  Object.keys(CATS).forEach(k=> mk(k.replace('_',' '), k));
+}
+
+function showChallenge(c){
+  current=c;
+  $('cat').textContent=c[1].replace('_',' ');
+  $('cat').style.background=CATS[c[1]];
+  $('sparks').textContent='✨'.repeat(c[3]);
+  $('emoji').textContent=c[2];
+  $('ctext').textContent=c[0];
+  const doneBtn=$('done');
+  doneBtn.classList.remove('gotit');
+  doneBtn.textContent='Done! 🎉';
+  doneBtn.disabled=false;
+}
+
+function pick(){
+  const pool=filter?CHALLENGES.filter(c=>c[1]===filter):CHALLENGES;
+  let c; do{ c=pool[Math.floor(Math.random()*pool.length)]; }while(pool.length>1 && c===current);
+  return c;
+}
+
+function draw(){
+  if(shuffling) return;
+  shuffling=true; card.classList.add('shuffling');
+  let n=0;
+  const iv=setInterval(()=>{
+    showChallenge(pick());
+    if(++n>=10){ clearInterval(iv); shuffling=false; card.classList.remove('shuffling'); }
+  },55);
+}
+
+/* ---------------- complete ---------------- */
+function complete(){
+  if(!current || shuffling) return;
+  const doneBtn=$('done');
+  if(doneBtn.classList.contains('gotit')) return;
+
+  const gained = current[3]*10;
+  state.points += gained;
+  state.total  += 1;
+  if(current[3]>state.maxSpark) state.maxSpark=current[3];
+  if(!state.cats.includes(current[1])) state.cats.push(current[1]);
+
+  const t=today();
+  if(state.lastDate!==t){
+    const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    state.streak = (state.lastDate===y) ? state.streak+1 : 1;
+    state.lastDate=t;
+  }
+
+  // badges
+  const newBadges=[];
+  BADGES.forEach(b=>{ if(!state.badges.includes(b[0]) && b[3](state)){ state.badges.push(b[0]); newBadges.push(b); } });
+
+  save(); renderStats(); renderBadges();
+  confetti();
+  toast(`Nice! +${gained} ✨`);
+  if(newBadges.length){ setTimeout(()=>toast(`${newBadges[0][1]} Badge: ${newBadges[0][2]}!`), 1400); }
+
+  doneBtn.classList.add('gotit');
+  doneBtn.textContent='Logged ✓';
+}
+
+/* ---------------- brag ---------------- */
+function brag(){
+  const txt=`I just did good deed #${state.total} on Kind Quest 💛  Streak: ${state.streak} 🔥 · ${state.points} ✨\nYour turn — go do something kind today. #KindQuest`;
+  navigator.clipboard?.writeText(txt).then(()=>toast('Copied! Go paste it 📣')).catch(()=>toast(txt));
+}
+
+/* ---------------- toast ---------------- */
+let toastT;
+function toast(msg){
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+/* ---------------- confetti ---------------- */
+const cv=$('cc'), ctx=cv.getContext('2d');
+function sz(){ cv.width=innerWidth; cv.height=innerHeight; }
+addEventListener('resize',sz); sz();
+let parts=[];
+function confetti(){
+  const colors=['#ff5e7e','#ff9a5a','#2bd47d','#7b5cff','#21b5d6','#f4a300','#ffffff'];
+  for(let i=0;i<140;i++){
+    parts.push({ x:innerWidth/2, y:innerHeight*0.32,
+      vx:(Math.random()-.5)*14, vy:Math.random()*-15-4,
+      g:.45+Math.random()*.2, s:6+Math.random()*7,
+      c:colors[i%colors.length], r:Math.random()*6, vr:(Math.random()-.5)*.4, life:0 });
+  }
+  if(parts.length<=140) anim();
+}
+function anim(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; p.life++;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c;
+    ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); ctx.restore();
+  });
+  parts=parts.filter(p=>p.y<cv.height+30 && p.life<200);
+  if(parts.length) requestAnimationFrame(anim); else ctx.clearRect(0,0,cv.width,cv.height);
+}
+
+/* ---------------- init ---------------- */
+$('done').onclick=complete;
+$('reroll').onclick=draw;
+$('brag').onclick=brag;
+renderStats(); renderBadges(); renderChips();
+showChallenge(pick());
+</script>
+</body>
+</html>
